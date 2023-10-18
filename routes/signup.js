@@ -4,14 +4,14 @@ const bcrypt = require("bcryptjs");
 
 router.post("/register", async (req, res) => {
   console.log(req.body);
-  const { name, email, password } = req.body;
-  if (!name || !email || !password)
+  const { name, email, password, userType } = req.body;
+  if (!name || !email || !password || !userType)
     return res.status(400).json({ error: "Please enter all the details" });
 
   const emailReg =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-  if (name.length > 15)
+  if (name.length > 15 || name.length < 3)
     return res
       .status(400)
       .json({ error: "Name can only be less than 25 characters." });
@@ -51,7 +51,7 @@ router.post("/register", async (req, res) => {
     if (doesUserAlreadyExists)
       return res.status(400).json({ error: "User already exists" });
 
-    const hashPassword = await bcrypt.hash(req.body.password, 12);
+    const hashPassword = await bcrypt.hash(password, 12);
     // const newUser = new User({ name, email, password: hashPassword });
 
     // const result = await newUser.save();
@@ -67,7 +67,7 @@ router.post("/register", async (req, res) => {
           dataSource: "Cluster0",
           database: "sms",
           collection: "users",
-          document: { name, email, password: hashPassword },
+          document: { name, email, password: hashPassword, userType },
         }),
       }
     );
