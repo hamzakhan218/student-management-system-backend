@@ -78,4 +78,73 @@ router.post("/register", async (req, res) => {
   }
 });
 
+router.post("/change-password", async (req, res) => {
+  const { id, password, newPassword } = req.body;
+
+  if (!id || !password || !newPassword)
+    return res.status(400).json({ error: "Please enter all the details" });
+
+  try {
+    const response = await fetch(
+      "https://ap-south-1.aws.data.mongodb-api.com/app/data-esbgx/endpoint/data/v1/action/findOne",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apiKey: "GCXGtTwS46OOUhnwYP622IB3bVfopWYRCCQDREO1MVZ2xE9Fmoh8MEEphpgV2MA0",
+        },
+        body: JSON.stringify({
+          dataSource: "Cluster0",
+          database: "sms",
+          collection: "users",
+          filter: {
+            _id: { $oid: id },
+          },
+        }),
+      }
+  );
+  const data = await response.json();
+
+  if(!data.document)
+      res.status(400).json({ error: "User not found" });
+
+  if(!await bcrypt.compare(password, data.document.password))
+    return res.status(400).json({ error: "Password is incorrect!" });
+  
+    const hashPassword = await bcrypt.hash(newPassword, 12);
+
+    const updatedUser = await fetch(
+      "https://ap-south-1.aws.data.mongodb-api.com/app/data-esbgx/endpoint/data/v1/action/updateOne",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apiKey: "GCXGtTwS46OOUhnwYP622IB3bVfopWYRCCQDREO1MVZ2xE9Fmoh8MEEphpgV2MA0",
+        },
+        body: JSON.stringify({
+          dataSource: "Cluster0",
+          database: "sms",
+          collection: "users",
+          filter: { "_id": { "$oid": id } },
+          update: {
+          $set: {
+              password: hashPassword,
+          }}
+        }),
+      }
+  );
+
+  const saveDoc = await updatedUser.json()
+
+  if (!saveDoc.modifiedCount){
+    return res.status(400).json({ error: "Password updation failed." });
+  }
+
+  return res.status(200).json({"message": "Password changed successfully!"});
+
+  } catch (error) {
+    console.log(error)
+  }
+})
+
 module.exports = router;
