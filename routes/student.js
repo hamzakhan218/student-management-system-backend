@@ -24,7 +24,33 @@ router.get('/get-students', async (req, res) => {
     }
 })
 
-router.post('/add-student', async (req, res) => {
+router.get('/get-student', async (req, res) => {
+    const {admission_number} = req.body;
+    try {
+        const response = await fetch(
+            "https://ap-south-1.aws.data.mongodb-api.com/app/data-esbgx/endpoint/data/v1/action/findOne",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                apiKey: "GCXGtTwS46OOUhnwYP622IB3bVfopWYRCCQDREO1MVZ2xE9Fmoh8MEEphpgV2MA0",
+              },
+              body: JSON.stringify({
+                dataSource: "Cluster0",
+                database: "sms",
+                collection: "students",
+                filter: {admission_number},
+              }),
+            }
+        );
+        const data = await response.json();
+        return res.status(200).json(data.documents);
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+router.post('/add-students', async (req, res) => {
     const {name, class_number, section, admission_number, gender, dob, address, phone_number, guardian_phone_number, subjects} = req.body;
     if(!name || !class_number || !section || !admission_number || !gender || !dob || !address || !phone_number || !guardian_phone_number || !subjects)
         return res.status(400).json({ error: "Please enter all the details" });
@@ -77,7 +103,7 @@ router.post('/add-student', async (req, res) => {
     }
 })
 
-router.delete('/delete-student', async (req, res) => {
+router.delete('/delete-students', async (req, res) => {
     const {admission_number} = req.body;
     if(!admission_number)
         return res.status(400).json({ error: "Please enter all the details" });
@@ -109,7 +135,7 @@ router.delete('/delete-student', async (req, res) => {
     }
 })
 
-router.put('/update-student', async (req, res) => {
+router.put('/update-students', async (req, res) => {
     const {name, class_number, section, admission_number, gender, dob, address, phone_number, guardian_phone_number, subjects} = req.body;
     if(!name || !class_number || !section || !admission_number || !gender || !dob || !address || !phone_number || !guardian_phone_number || !subjects)
         return res.status(400).json({ error: "Please enter all the details" });
