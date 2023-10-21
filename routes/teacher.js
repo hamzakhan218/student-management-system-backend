@@ -25,7 +25,7 @@ router.get("/get-teachers", async (req, res) => {
     }
 })
 
-router.get("/get-teachers", async (req, res) => {
+router.post("/get-teacher", async (req, res) => {
     const { cnic } = req.body;
 
     const cnicReg =
@@ -52,16 +52,16 @@ router.get("/get-teachers", async (req, res) => {
             }
         );
         const data = await response.json();
-        return res.status(200).json(data.documents);
+        return res.status(200).json(data.document);
     } catch (error) {
         
     }
 })
 
 router.post("/add-teacher", async (req, res) => {
-    const {cnic, name, email, password, education, address, phone_number, faculty_id, salary, gender, designation, date_of_joining} = req.body;
+    const {cnic, name, email, password, education, address, phone_number, salary, gender, designation, date_of_joining} = req.body;
 
-    if(!cnic || !name || !email || !password ||!education || !address || !phone_number || !faculty_id || !salary || !gender || !designation || !date_of_joining)
+    if(!cnic || !name || !email || !password ||!education || !address || !phone_number || !salary || !gender || !designation || !date_of_joining)
         return res.status(400).json({ error: "Please enter all the details" });
 
     const emailReg =
@@ -126,7 +126,7 @@ router.post("/add-teacher", async (req, res) => {
                 database: "sms",
                 collection: "teachers",
                 document: {
-                    cnic, name, email, password: hashPassword, education, address, phone_number, faculty_id, salary, gender, designation, date_of_joining
+                    cnic, name, email, password: hashPassword, education, address, phone_number, salary, gender, designation, date_of_joining
                 }
               })
             }
@@ -143,9 +143,9 @@ router.post("/add-teacher", async (req, res) => {
 })
 
 router.put("/update-teacher", async (req, res) => {
-    const {snic, name, email, password, education, address, phone_number, faculty_id, salary, gender, designation, date_of_joining} = req.body;
+    const {snic, name, email, password, education, address, phone_number, salary, gender, designation, date_of_joining} = req.body;
 
-    if(!cnic || !name || !email || !password ||!education || !address || !phone_number || !faculty_id || !salary || !gender || !designation || !date_of_joining)
+    if(!cnic || !name || !email || !password ||!education || !address || !phone_number || !salary || !gender || !designation || !date_of_joining)
         return res.status(400).json({ error: "Please enter all the details" });
 
     const emailReg =
@@ -211,7 +211,7 @@ router.put("/update-teacher", async (req, res) => {
                 filter: {email},
                 update: {
                     $set: {
-                        cnic, name, email, password, education, address, phone_number, faculty_id, salary, gender, designation, date_of_joining
+                        cnic, name, email, password, education, address, phone_number, salary, gender, designation, date_of_joining
                     }
                 }
                 }),
@@ -260,6 +260,65 @@ router.delete("/delete-teacher", async (req, res) => {
         } catch (error) {
             console.log(error)
         }
+})
+
+router.delete("/delete-teachers", async (req, res) => {
+    const { cnics } = req.body;
+    if(!cnics)
+        return res.status(400).json({ error: "Please enter all the details" });
+
+    try {
+        const doesTeachersExists = await fetch(
+            "https://ap-south-1.aws.data.mongodb-api.com/app/data-esbgx/endpoint/data/v1/action/find",
+            {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                apiKey: "GCXGtTwS46OOUhnwYP622IB3bVfopWYRCCQDREO1MVZ2xE9Fmoh8MEEphpgV2MA0",
+                },
+                body: JSON.stringify({
+                dataSource: "Cluster0",
+                database: "sms",
+                collection: "teachers",
+                filter: {
+                    cnic: {
+                        $in: cnics
+                    }
+                },
+                }),
+            }
+        );
+        const object = await doesTeachersExists.json();
+        if(object.documents.length !== cnics.length)
+            return res.status(400).json({ error: "Teachers not Found!"});
+        const deleteTeacher = await fetch(
+            "https://ap-south-1.aws.data.mongodb-api.com/app/data-esbgx/endpoint/data/v1/action/deleteMany",
+            {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                apiKey: "GCXGtTwS46OOUhnwYP622IB3bVfopWYRCCQDREO1MVZ2xE9Fmoh8MEEphpgV2MA0",
+                },
+                body: JSON.stringify({
+                dataSource: "Cluster0",
+                database: "sms",
+                collection: "teachers",
+                filter: {
+                    cnic: {
+                        $in: cnics
+                    }
+                },
+                }),
+            }
+        );
+        const deletedTeacher = await deleteTeacher.json();
+        if(!deletedTeacher.deletedCount)
+            return res.status(400).json({ error: "Delete failed!"});
+        
+        return res.status(200).json(`Deleted ${deletedTeacher.deletedCount} teachers successfully`);
+    } catch (error) {
+        console.log(error)
+    }
 })
 
 module.exports = router;

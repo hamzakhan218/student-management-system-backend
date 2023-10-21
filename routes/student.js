@@ -24,7 +24,7 @@ router.get('/get-students', async (req, res) => {
     }
 })
 
-router.get('/get-student', async (req, res) => {
+router.post('/get-student', async (req, res) => {
     const {admission_number} = req.body;
     try {
         const response = await fetch(
@@ -44,7 +44,7 @@ router.get('/get-student', async (req, res) => {
             }
         );
         const data = await response.json();
-        return res.status(200).json(data.documents);
+        return res.status(200).json(data.document);
     } catch (error) {
         console.log(error)
     }
@@ -103,7 +103,7 @@ router.post('/add-students', async (req, res) => {
     }
 })
 
-router.delete('/delete-students', async (req, res) => {
+router.delete('/delete-student', async (req, res) => {
     const {admission_number} = req.body;
     if(!admission_number)
         return res.status(400).json({ error: "Please enter all the details" });
@@ -130,6 +130,42 @@ router.delete('/delete-students', async (req, res) => {
             return res.status(400).json({ error: "Delete failed!"});
         
         return res.status(200).json("Deleted successfully");
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+router.delete('/delete-students', async (req, res) => {
+    const {admission_numbers} = req.body;
+    if(!admission_numbers)
+        return res.status(400).json({ error: "Please enter all the details" });
+
+    try {
+        const deleteStudent = await fetch(
+            "https://ap-south-1.aws.data.mongodb-api.com/app/data-esbgx/endpoint/data/v1/action/deleteMany",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                apiKey: "GCXGtTwS46OOUhnwYP622IB3bVfopWYRCCQDREO1MVZ2xE9Fmoh8MEEphpgV2MA0",
+              },
+              body: JSON.stringify({
+                dataSource: "Cluster0",
+                database: "sms",
+                collection: "students",
+                filter: {
+                    admission_number: {
+                        $in: admission_numbers
+                    }
+                },
+              }),
+            }
+        );
+        const deletedStudent = await deleteStudent.json();
+        if(!deletedStudent.deletedCount)
+            return res.status(400).json({ error: "Delete failed!"});
+        
+        return res.status(200).json(`Deleted ${deletedStudent.deletedCount} students`);
     } catch (error) {
         console.log(error)
     }
