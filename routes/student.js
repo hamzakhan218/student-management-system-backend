@@ -50,7 +50,7 @@ router.post('/get-student', async (req, res) => {
     }
 })
 
-router.post('/add-students', async (req, res) => {
+router.post('/add-student', async (req, res) => {
     const {name, class_number, section, admission_number, gender, dob, address, phone_number, guardian_phone_number, subjects} = req.body;
     if(!name || !class_number || !section || !admission_number || !gender || !dob || !address || !phone_number || !guardian_phone_number || !subjects)
         return res.status(400).json({ error: "Please enter all the details" });
